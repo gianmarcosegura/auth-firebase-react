@@ -2,18 +2,34 @@ import React from 'react';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom'
 import Navbar from './components/Navbar';
 import Login from './components/Login';
+import Admin from './components/Admin';
+import { auth } from './firebase';
 
 const App = () => {
-  return (
+
+  const [firebaseUser, setFirebaseUser] = React.useState(false);
+
+  React.useEffect(() => {
+    auth.onAuthStateChanged((user) => {
+        console.log(user)
+        if(user){
+            setFirebaseUser(user)
+        } else {
+            setFirebaseUser(null)
+        }
+    })
+}, [])
+
+  return firebaseUser !== false ? (
     <Router>
-      <Navbar />
+      <Navbar firebaseUser={ firebaseUser }/>
       <div className="container">
         <Switch>
           <Route path="/login">
               <Login />
           </Route>
           <Route path="/admin">
-              Ruta de administracion
+              <Admin />
           </Route>
           <Route path="/" exact>
               Ruta de inicio
@@ -21,6 +37,8 @@ const App = () => {
         </Switch>
       </div>
     </Router>
+  ) : (
+    <p>Cargando....</p>
   )
 }
 

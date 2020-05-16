@@ -1,11 +1,13 @@
 import React from 'react'
+import { auth, db } from './../firebase';
+import { withRouter } from 'react-router-dom';
 
-const Login = () => {
+const Login = (props) => {
 
     const [email, setEmail] = React.useState('');
     const [pass, setPass] = React.useState('');
     const [error, setError] = React.useState(null);
-    const [esRegistro, setEsRegistro] = React.useState(true)
+    const [esRegistro, setEsRegistro] = React.useState(true);
 
     const procesarDatos = e => {
 
@@ -29,9 +31,57 @@ const Login = () => {
             return
         }
 
-        console.log('correcto...')
         setError(null)
 
+        if(esRegistro) {
+            registrar()
+        } else {
+            login()
+        }
+
+    }
+
+    const login = React.useCallback(async() => {
+
+        try {
+
+            const response = await auth.signInWithEmailAndPassword(email, pass);
+            console.log('response :>> ', response);
+            cleanData();
+            props.history.push('/admin');
+
+        } catch (error) {
+            setError(error.message);
+        }
+
+    }, [email, pass, props.history])
+
+    const registrar = React.useCallback(async() => {
+
+        try {
+
+            const response = await auth.createUserWithEmailAndPassword(email, pass);
+            await db.collection('usuarios').doc(response.user.email).set({
+                email: response.user.email,
+                uid: response.user.uid
+            });
+            await db.collection(response.user.uid).add({
+                name: 'Ejemplo Tarea',
+                fecha: Date.now()
+            })
+            cleanData();
+            props.history.push('/admin');
+
+        } catch (error) {
+            setError(error.message);
+        }
+
+    }, [email, pass, props.history])
+
+    const cleanData = () => {
+        setEmail('');
+        setPass('');
+        setError(null);
     }
 
     return (
@@ -86,4 +136,4 @@ const Login = () => {
     )
 }
 
-export default Login
+export default withRouter(Login)

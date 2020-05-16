@@ -1,7 +1,18 @@
 import React from 'react'
-import {Link, NavLink} from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
+import { auth } from './../firebase';
+import { withRouter } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = (props) => {
+
+    console.log('Props: ', props);
+
+    const cerrarSesion = () => {
+        auth.signOut()
+            .then(() => props.history.push('/login'))
+            .catch((error) => console.log(error))
+    }
+
     return (
         <div className="navbar navbar-dark bg-dark">
             <div className="container">
@@ -15,18 +26,30 @@ const Navbar = () => {
                         >
                             Inicio
                         </NavLink>
-                        <NavLink
-                            className="btn btn-dark mr-2"
-                            to="/admin"
-                        >
-                            Admin
-                        </NavLink>
-                        <NavLink
-                            className="btn btn-dark"
-                            to="/login"
-                        >
-                            Login
-                        </NavLink>
+                        {
+                            !props.firebaseUser ? (
+                                <NavLink
+                                    className="btn btn-dark"
+                                    to="/login"
+                                >
+                                    Login
+                                </NavLink>
+                            ) : (
+                                <>
+                                    <NavLink
+                                        className="btn btn-dark mr-2"
+                                        to="/admin"
+                                    >
+                                        Admin
+                                    </NavLink>
+                                    <button
+                                        className="btn btn-dark"
+                                        onClick={ () => cerrarSesion() }>
+                                        Cerrar Sesión
+                                    </button>
+                                </>
+                            )
+                        }
                     </div>
                 </div>
             </div>
@@ -34,4 +57,4 @@ const Navbar = () => {
     )
 }
 
-export default Navbar
+export default withRouter(Navbar)
