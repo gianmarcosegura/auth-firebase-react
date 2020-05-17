@@ -1,13 +1,16 @@
 import React from 'react'
 import { db } from '../firebase'
+import moment from 'moment';
+import 'moment/locale/es';
 
 const Firestore = (props) => {
 
-    console.log('props :>> ', props);
     const [tareas, setTareas] = React.useState([])
     const [tarea, setTarea] = React.useState('')
     const [modoEdicion, setModoEdicion] = React.useState(false)
     const [id, setId] = React.useState('')
+    const [ultimo, setUltimo] = React.useState(null)
+    const [desactivar, setDesactivar] = React.useState(false)
 
 
     React.useEffect(() => {
@@ -16,13 +19,32 @@ const Firestore = (props) => {
 
         try {
 
-          const data = await db.collection(props.user.uid).get()
-          const arrayData = data.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-          console.log(arrayData)
-          setTareas(arrayData)
+            setDesactivar(true)
+            const data = await db.collection(props.user.uid)
+                .limit(2)
+                .orderBy('fecha', 'desc')
+                .get();
+
+            setUltimo(data.docs[data.docs.length - 1])
+
+            const arrayData = data.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+
+            setTareas(arrayData)
+            const query = await db.collection(props.user.uid)
+                .limit(2)
+                .orderBy('fecha', 'desc')
+                .startAfter(data.docs[data.docs.length - 1])
+                .get()
+            if (query.empty) {
+                setDesactivar(true)
+            } else {
+                setDesactivar(false)
+            }
+
+            console.log('arrayData :>> ', arrayData);
 
         } catch (error) {
-          console.log(error)
+            console.log(error)
         }
 
       }
@@ -103,6 +125,43 @@ const Firestore = (props) => {
       }
     }
 
+    const siguiente = async() => {
+        setDesactivar(true)
+        console.log('SIGUIENTE: ', ultimo);
+        try {
+            const data = await db.collection(props.user.uid)
+                .limit(2)
+                .orderBy('fecha', 'desc')
+                .startAfter(ultimo)
+                .get()
+
+
+            setUltimo(data.docs[data.docs.length - 1])
+
+            const arrayData = data.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            console.log('nuevoA', arrayData)
+            if(arrayData.length !== 0){
+                setTareas([...tareas, ...arrayData])
+            }
+
+            const query = await db.collection(props.user.uid)
+                .limit(2)
+                .orderBy('fecha', 'desc')
+                .startAfter(data.docs[data.docs.length - 1])
+                .get()
+
+            if(query.empty){
+                console.log('no hay más...')
+                setDesactivar(true)
+            }else{
+                setDesactivar(false)
+            }
+
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     return (
         <div>
             <div className="row">
@@ -112,7 +171,7 @@ const Firestore = (props) => {
                         {
                         tareas.map(item => (
                             <li className="list-group-item" key={item.id}>
-                            {item.name}
+                            { item.name } - { moment(item.fecha).format('LLL') }
                             <button
                                 className="btn btn-danger btn-sm float-right"
                                 onClick={() => eliminar(item.id)}
@@ -129,6 +188,12 @@ const Firestore = (props) => {
                         ))
                         }
                     </ul>
+                    <button
+                        className="btn btn-info btn-block mt-2 btn-sm"
+                        disabled={ desactivar }
+                        onClick={ () => siguiente() }>
+                        Más Tareas...
+                    </button>
                 </div>
                 <div className="col-md-6">
                     <h3>

@@ -120,15 +120,27 @@ const Login = (props) => {
                             className="btn btn-lg btn-dark btn-block"
                             type="submit"
                         >
-                            {esRegistro ? 'Registrar' : 'Acceder'}
+                            { esRegistro ? 'Registrar' : 'Acceder' }
                         </button>
                         <button
                             className="btn btn-sm btn-info btn-block"
                             type="button"
                             onClick={() => setEsRegistro(!esRegistro)}
                         >
-                            {esRegistro ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}
+                            { esRegistro ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?' }
                         </button>
+                        {
+                            !esRegistro ? (
+                                <button
+                                    className="btn btn-sm btn-info btn-danger"
+                                    type="button"
+                                    onClick={() => props.history.push('/reset')}
+                                >
+                                    Perdí mi contraseña
+                                </button>
+
+                            ): null
+                        }
                     </form>
                 </div>
             </div>
